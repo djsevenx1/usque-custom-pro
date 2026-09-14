@@ -1,0 +1,36 @@
+name: Sync Upstream
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    # 每天 UTC 02:00 (北京时间 10:00) 自动执行
+    - cron: "0 2 * * *"
+  # 支持在 GitHub 网页端 Actions 页面手动点击触发
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sync latest from upstream
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync with upstream
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git remote add upstream https://github.com/KJGX66F/usque-custom-pro.git
+          git fetch upstream
+          
+          git checkout main
+          # 优先使用 fast-forward 合并，若有分叉则自动生成 merge commit
+          git merge upstream/main --ff-only || git merge upstream/main -m "chore: auto sync upstream changes"
+          
+          git push origin main
