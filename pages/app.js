@@ -34,6 +34,7 @@ const CLASH_DOMAIN_RULESETS=[
 ["cn","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.mrs"],
 ["category-ai-!cn","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-ai-!cn.mrs"],
 ["youtube","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.mrs"],
+  ["google","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/google.mrs"],
 ["netflix","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.mrs"],
 ["disney","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/disney.mrs"],
 ["spotify","https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/spotify.mrs"],
@@ -729,7 +730,7 @@ function clashGroupsAndRules(names,o){
      a.push(
        "    hidden: true",
        "    url: https://www.gstatic.com/generate_204","    expected-status: 204",
-       "    interval: 120","    tolerance: 20","    timeout: 5000","    lazy: false","    max-failed-times: 2",
+       "    interval: 300","    tolerance: 50","    timeout: 5000","    lazy: false","    max-failed-times: 2",
        "    use:",`      - ${q(freeProviderId(code,"general"))}`
      );
    }
@@ -739,7 +740,7 @@ function clashGroupsAndRules(names,o){
  groupHeader(a,"♻️ 自动选择","url-test");
  a.push(
    "    url: https://www.gstatic.com/generate_204","    expected-status: 204",
-   "    interval: 120","    tolerance: 20","    timeout: 5000","    lazy: false","    max-failed-times: 2","    proxies:"
+   "    interval: 300","    tolerance: 50","    timeout: 5000","    lazy: false","    max-failed-times: 2","    proxies:"
  );
  if(freeOn)appendCountryChoices(a,o);
  a.push('      - "🚀 WARP自动"');
@@ -798,7 +799,7 @@ function clashGroupsAndRules(names,o){
  groupHeader(a,"⚡ YouTube-WARP极速","url-test");
  a.push(
    "    hidden: true","    url: https://www.gstatic.com/generate_204","    expected-status: 204",
-   "    interval: 60","    tolerance: 10","    timeout: 4000","    lazy: false","    max-failed-times: 1","    proxies:"
+   "    interval: 300","    tolerance: 50","    timeout: 4000","    lazy: false","    max-failed-times: 1","    proxies:"
  );
  appendRawNodes(a,names);
 
@@ -806,7 +807,7 @@ function clashGroupsAndRules(names,o){
    groupHeader(a,"⚡ YouTube-免费极速","url-test");
    a.push(
      "    hidden: true","    url: https://www.gstatic.com/generate_204","    expected-status: 204",
-     "    interval: 60","    tolerance: 10","    timeout: 5000","    lazy: false","    max-failed-times: 1","    use:"
+     "    interval: 300","    tolerance: 50","    timeout: 5000","    lazy: false","    max-failed-times: 1","    use:"
    );
    appendProviderUse(a,o,"general");
  }
@@ -941,7 +942,19 @@ function clashGroupsAndRules(names,o){
    "  - RULE-SET,cloudflare,☁️ CloudflareCDN",
    "  - RULE-SET,cloudflare_ip,☁️ CloudflareCDN,no-resolve",
    "",
-   "  # Mainland / local",
+   "",
+    "  # Google & Google Play Store (Auto-Patched)",
+    "  - DOMAIN-SUFFIX,services.googleapis.cn,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,gvt1.com,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,gvt2.com,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,gvt3.com,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,1e100.net,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,play.google.com,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,play.googleapis.com,🚀 节点选择",
+    "  - DOMAIN-SUFFIX,xn--ngstr-lra8j.com,🚀 节点选择",
+    "  - RULE-SET,google,🚀 节点选择",
+    "",
+    "  # Mainland / local",
    "  - RULE-SET,bilibili,🎯 全球直连",
    "  - RULE-SET,cn,🎯 全球直连",
    "  - RULE-SET,cn_ip,🎯 全球直连,no-resolve",
@@ -963,17 +976,21 @@ function buildClash(){
  }
  const a=[
   `# ${o.profile} - Clash / Mihomo MASQUE v6.17 Dynamic-Country-Rules`,
-  "mixed-port: 7890","allow-lan: false","mode: rule","log-level: info","ipv6: true","unified-delay: true","tcp-concurrent: true","keep-alive-interval: 15","keep-alive-idle: 15"
+  "mixed-port: 7890","allow-lan: false","mode: rule","log-level: info","ipv6: false","unified-delay: true","tcp-concurrent: true","keep-alive-interval: 15","keep-alive-idle: 15"
  ];
  if(o.enableControllerApi){
    const ctl=controllerHostPort(o.controllerUrl);
    a.push(`external-controller: ${ctl.host}:${ctl.port}`,`secret: ${q(o.controllerSecret)}`);
  }
  a.push("",
-  "dns:","  enable: true","  ipv6: true","  enhanced-mode: fake-ip","  listen: 0.0.0.0:7874","  fake-ip-range: 198.18.0.1/16",
+  "dns:","  enable: true","  ipv6: false","  enhanced-mode: fake-ip","  listen: 0.0.0.0:7874","  fake-ip-range: 198.18.0.1/16",
   "  fake-ip-filter:",'    - "*.lan"','    - "*.local"','    - "*.arpa"','    - "*.msftncsi.com"','    - "www.msftconnecttest.com"',
   "  default-nameserver:","    - 223.5.5.5","    - 223.6.6.6",
-  "  nameserver:","    - https://doh.pub/dns-query","    - https://dns.alidns.com/dns-query",
+  "  nameserver:","    - https://doh.pub/dns-query","    - https://dns.alidns.com/dns-query","    - https://1.1.1.1/dns-query","    - https://dns.google/dns-query",
+  "  proxy-server-nameserver:","    - 223.5.5.5","    - 1.1.1.1",
+  "  nameserver-policy:",'    "geosite:google": "https://dns.google/dns-query"',
+  '    "geosite:geolocation-!cn": "https://1.1.1.1/dns-query"',
+  '    "geosite:cn": ["https://doh.pub/dns-query","https://dns.alidns.com/dns-query"]',
   "","proxies:"
  );
  pairs.forEach(([server,port],i)=>{const n=nodeName(server,port,i);names.push(n);makeNode(a,n,server,port,o)});
@@ -987,7 +1004,7 @@ function buildShadowrocket(){
  // Use a compact Clash-compatible YAML to avoid relying on undocumented native line syntax.
  const o=opts(),pairs=connectionPairs(),names=[];
  const a=[`# ${o.profile} - Shadowrocket 2.2.90+ MASQUE (Clash-compatible YAML)`,
- "mixed-port: 7890","mode: rule","ipv6: true","","proxies:"];
+ "mixed-port: 7890","mode: rule","ipv6: false","","proxies:"];
  pairs.forEach(([server,port],i)=>{const n=nodeName(server,port,i);names.push(n);makeNode(a,n,server,port,o)});
  a.push("","proxy-groups:",'  - name: "PROXY"',"    type: select","    proxies:");
  names.forEach(n=>a.push(`      - ${q(n)}`));a.push("      - DIRECT","","rules:","  - GEOIP,CN,DIRECT","  - MATCH,PROXY","");

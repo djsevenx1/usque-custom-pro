@@ -1,4 +1,4 @@
-name: Sync Upstream
+name: Sync Upstream & Auto-Patch
 
 permissions:
   contents: write
@@ -11,8 +11,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync:
-    name: Sync latest from upstream
+  sync-and-patch:
+    name: Sync upstream and apply Google Play patch
     runs-on: ubuntu-latest
 
     steps:
@@ -21,16 +21,50 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Sync with upstream
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sync with upstream and apply patch
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git remote add upstream https://github.com/KJGX66F/usque-custom-pro.git
-          git fetch upstream
+          echo "=== 1. 添加并拉取上游仓库最新代码 ==="
+          git remote add upstream https://github.com/KJGX66F/usque-custom-pro.git 2>/dev/null || true
+          git fetch upstream main
           
           git checkout main
-          # 优先使用 fast-forward 合并，若有分叉则自动生成 merge commit
-          git merge upstream/main --ff-only || git merge upstream/main -m "chore: auto sync upstream changes"
           
-          git push origin main
+          echo "=== 2. 合并上游更新 (具备冲突自愈机制) ==="
+          if ! git merge upstream/main -m "chore: sync upstream changes"; then
+            echo "[警告] 存在合并冲突，启动基线重置与自愈流程..."
+            git merge --abort || true
+            mkdir -p /tmp/sync-backup
+            cp -rf scripts .github /tmp/sync-backup/
+            git reset --hard upstream/main
+            cp -rf /tmp/sync-backup/scripts .
+            cp -rf /tmp/sync-backup/.github .
+            git add scripts .github
+            git commit -m "chore: reset to upstream/main baseline while preserving automation tools" || true
+          fi
+          
+          echo "=== 3. 运行幂等补丁脚本 (自动修复 Google Play 下载与配置优化) ==="
+          node scripts/apply-patch.js
+          
+          echo "=== 4. 提交补丁变更并推送 ==="
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "chore(patch): auto apply Google Play & network stability patch [skip ci]"
+            git push origin main
+            echo "[成功] 已成功推送最新补丁与上游同步结果！"
+          else
+            # 如果上游有新 commit 被 merge 了但 patch 没有产生新 diff，仍需 push merge commit
+            if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+              git push origin main
+              echo "[成功] 已成功推送合并提交！"
+            else
+              echo "[完成] 当前已是最新状态，无需推送。"
+            fi
+          fi
